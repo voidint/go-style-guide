@@ -1,11 +1,74 @@
-# Go代码规范草案
+# Go代码规范(beta)
 ## 目录
+- [前提](#前提)
+- [代码规范](#代码规范)
+	- [import](#import)
+	- [return](#return)
+	- [不建议使uint](#不建议使uint)
+	- [变量声明](#变量声明)
+	- [变量导出](#变量导出)
+	- [变量命名](#变量命名)
+	- [package命名](#package命名)
+	- [interface命名](#interface命名)
+	- [源代码文件命名](#源代码文件命名)
+	- [error处理](#error处理)
+	- [error文本内容](#error文本内容)
+	- [panic与error](#panic与error)
+	- [字符串拼接](#字符串拼接)
+	- [receiver类型](#receiver类型)
+	- [控制结构](#控制结构)
+- [参考](#参考)
 
 ## 前提
 - 代码经由[gofmt](https://github.com/golang/go/tree/master/src/cmd/gofmt)或[goimports](https://github.com/golang/tools/tree/master/cmd/goimports)工具格式化
 - 代码已通过[golint](https://github.com/golang/lint)或[gometalinter](https://github.com/alecthomas/gometalinter)工具检查
 
 ## 代码规范
+### import
+不要使用相对路径，使用绝对路径。
+##### Don't
+``` go
+import ../config
+```
+##### Do
+``` go
+import github.com/voidint/gbb/config
+```
+
+### return
+##### Don't
+``` go
+func run() (n int, err error) {
+	// ...
+	return
+}
+```
+
+##### Do
+``` go
+func run() (n int, err error) {
+	// ...
+	return n, err
+}
+```
+
+### 不建议使uint
+需要使用整形数据类型情况下，多数都可以直接使用`int`，而不建议使用`uint`。标准库及其他第三方的类库，在类似的使用场景下多使用`int`。那么，此种`随大流`可以免去不必要的数据类型转换。
+
+##### Do
+``` go
+type Person struct{
+	Age int
+}
+```
+
+##### Don't
+``` go
+type Person struct{
+	Age uint
+}
+```
+
 ### 变量声明
 空slice的声明
 ##### Don't
@@ -34,140 +97,6 @@ func saySomething() {
 }
 ```
 
-### 除非性能敏感且必须，否则不建议使用uint
-需要整形数据类型情况下，多数都可以直接使用`int`。标准库及其他第三方的类库，在类似的使用场景下多使用`int`。那么，此种`随大流`可以免去不必要的数据类型转换。
-
-##### Do
-``` go
-type Person struct{
-	Age int
-}
-```
-
-##### Don't
-``` go
-type Person struct{
-	Age uint
-}
-```
-
-### 错误处理
-一般情况下，都需要对函数的返回值error进行逻辑判断。
-
-如果函数返回的错误确实可以不处理，那么请用`_`明确告知他人`并非是忘记处理error而是将error丢弃`。丢弃error，本身也是一种处理方式。
-##### Don't
-TODO 
-
-##### Do
-``` go
-scores := map[string]int{
-	"jim": 8,
-	"jerry": 7,
-	"tom": 3,
-}
-
-b,_ := json.Marshal(scores) // TODO 换个更好的例子
-fmt.Printf("%s", b)
-```
-
-### 错误字符串
-仅能使用英文系字符且以小写字母开头
-##### Don't
-``` go
-var (
-	ErrInvalidIP = errors.New("无效的IP")
-	ErrInvalidMacAddr = errors.New("Invalid mac address")
-)
-```
-
-##### Do
-``` go
-var (
-	ErrInvalidIP = errors.New("invalid ip")
-	ErrInvalidMacAddr = errors.New("invalid mac address")
-)
-```
-
-不要以标点符号结尾
-##### Don't
-``` go
-var (
-	ErrInvalidIP = errors.New("invalid ip!")
-)
-```
-
-##### Do
-``` go
-var (
-	ErrInvalidIP = errors.New("invalid ip")
-)
-```
-
-### 谨慎使用panic
-在一般业务代码中，建议使用`error`而非`panic`。
-
-##### Don't
-``` go
-func (repo model.Repo) GetUserByName(name string)(user *model.User){
-	if name == ""{
-		panic("user name can't be empty")
-	}
-	...
-}
-```
-##### Do
-``` go
-var ErrEmptyUserName = errors.New("user name can't be empty")
-
-func (repo model.Repo) GetUserByName(name string)(user *model.User, err error){
-	if name == ""{
-		return nil, ErrEmptyUserName
-	}
-	...
-}
-```
-
-对于那些可以被认为是`绝对不可能发生的事`，可谨慎使用`panic`。
-
-##### Do
-``` go
-type Season int
-
-const (
-	Spring Season = iota
-	Summer
-	Fall
-	Winter
-)
-
-func SeasonName(season Season) string {
-	switch season {
-	case Spring:
-		return "Spring"
-	case Summer:
-		return "Summer"
-	case Fall:
-		return "Fall"
-	case Winter:
-		return "Winter"
-	}
-	panic("unreachable")
-}
-```
-
-- 对于`error`、`panic`模棱两可的情况，就选`error`。
-
-
-### import
-不要使用相对路径，使用绝对路径。
-##### Don't
-``` go
-import ../config
-```
-##### Do
-``` go
-import github.com/voidint/gbb/config
-```
 
 ### 变量导出
 函数、方法、结构体、结构体属性等导出与否，由使用场景决定，但秉承着`权限最小化`的原则，能不导出就不要导出。
@@ -203,49 +132,6 @@ func (stu Student) Name() string{
 
 func main(){
 	fmt.Printf("student name: %s\n", NewStudent("voidint").Name())
-}
-```
-
-### 包命名
-包名由小写字母组成，不要使用下划线或者混合大小写。
-##### Don't
-``` go
-package busyBox
-```
-
-##### Do
-``` go
-package busybox
-```
-
-所有对包内的引用都应该使用包名去访问，因此包内的名称引用可以去掉包名这个标识。
-##### Don't
-``` go
-package chubby
-
-type ChubbyFile struct{
-}
-```
-
-##### Do
-``` go
-package chubby
-
-type File struct{
-}
-```
-
-### 接口命名
-理想情况下，接口命名以`er`结尾。
-##### Don't
-``` go
-type IRead interface{
-}
-```
-
-##### Do
-``` go
-type Reader interface{
 }
 ```
 
@@ -310,6 +196,50 @@ func SplitHostPort(hostport string) (host, port string, err error){
 }
 ```
 
+### package命名
+包名由小写字母组成，不要使用下划线或者混合大小写。
+##### Don't
+``` go
+package busyBox
+```
+
+##### Do
+``` go
+package busybox
+```
+
+所有对包内的引用都应该使用包名去访问，因此包内的名称引用可以去掉包名这个标识。
+##### Don't
+``` go
+package chubby
+
+type ChubbyFile struct{
+}
+```
+
+##### Do
+``` go
+package chubby
+
+type File struct{
+}
+```
+
+### interface命名
+理想情况下，接口命名以`er`结尾。
+##### Don't
+``` go
+type IRead interface{
+}
+```
+
+##### Do
+``` go
+type Reader interface{
+}
+```
+
+
 ### 源代码文件命名
 遵循简洁的原则，对于包内的源代码文件命名，一般情况下无需再携带包信息。
 ##### Don't
@@ -322,6 +252,161 @@ package service
 ``` go
 // service/network.go
 package service
+```
+
+
+### error处理
+一般情况下，都需要对函数的返回值error进行逻辑判断。
+
+如果函数返回的错误确实可以不处理，那么请用`_`明确告知他人`并非是忘记处理error而是将error丢弃`。丢弃error，本身也是一种处理方式。
+##### Don't
+``` go
+
+```
+
+##### Do
+``` go
+scores := map[string]int{
+	"jim": 8,
+	"jerry": 7,
+	"tom": 3,
+}
+
+b,_ := json.Marshal(scores) // TODO 换个更好的例子
+fmt.Printf("%s", b)
+```
+
+### error文本内容
+仅能使用英文系字符且以小写字母开头
+##### Don't
+``` go
+var (
+	ErrInvalidIP = errors.New("无效的IP")
+	ErrInvalidMacAddr = errors.New("Invalid mac address")
+)
+```
+
+##### Do
+``` go
+var (
+	ErrInvalidIP = errors.New("invalid ip")
+	ErrInvalidMacAddr = errors.New("invalid mac address")
+)
+```
+
+不要以标点符号结尾
+##### Don't
+``` go
+var (
+	ErrInvalidIP = errors.New("invalid ip!")
+)
+```
+
+##### Do
+``` go
+var (
+	ErrInvalidIP = errors.New("invalid ip")
+)
+```
+
+### panic与error
+在一般业务代码中，建议使用`error`而非`panic`。
+
+##### Don't
+``` go
+func (repo model.Repo) GetUserByName(name string)(user *model.User){
+	if name == ""{
+		panic("user name can't be empty")
+	}
+	...
+}
+```
+##### Do
+``` go
+var ErrEmptyUserName = errors.New("user name can't be empty")
+
+func (repo model.Repo) GetUserByName(name string)(user *model.User, err error){
+	if name == ""{
+		return nil, ErrEmptyUserName
+	}
+	...
+}
+```
+
+有时候为了降低函数的错误处理成本，可以把函数的`error`返回值移除。而函数一旦发生错误，则发生`panic`。这种场景要求函数名称以`Must`开头，并且在注释中明确告知此函数的`副作用`。
+
+##### Do
+``` go
+package regexp
+
+// MustCompile is like Compile but panics if the expression cannot be parsed.
+// It simplifies safe initialization of global variables holding compiled regular
+// expressions.
+func MustCompile(str string) *Regexp {
+  	regexp, error := Compile(str)
+  	if error != nil {
+  		panic(`regexp: Compile(` + quote(str) + `): ` + error.Error())
+  	}
+  	return regexp
+}
+```
+
+对于那些可以被认为是`绝对不可能发生的事`，可谨慎使用`panic`。
+
+##### Do
+``` go
+type Season int
+
+const (
+	Spring Season = iota
+	Summer
+	Fall
+	Winter
+)
+
+func SeasonName(season Season) string {
+	switch season {
+	case Spring:
+		return "Spring"
+	case Summer:
+		return "Summer"
+	case Fall:
+		return "Fall"
+	case Winter:
+		return "Winter"
+	}
+	panic("unreachable") 
+}
+```
+
+- 对于`error`、`panic`模棱两可的情况，就选`error`。
+
+### 字符串拼接
+多个字符串拼接时不要使用`+`，建议使用`fmt.Sprintf`或者`bytes.Buffer`。
+##### Don't
+``` go
+func (stu Student) String() string {
+	return stu.Num + " " + stu.Name + " " + stu.Age
+}
+```
+
+##### Do
+``` go
+func (stu Student) String() string {
+	return fmt.Sprintf("%s %s %d", stu.Num, stu.Name, stu.Age)
+}
+
+// OR
+
+func (stu Student) String() string {
+	var buf bytes.Buffer
+	buf.WriteString(stu.Num)
+	buf.WriteString(" ")
+	buf.WriteString(stu.Name)
+	buf.WriteString(" ")
+	buf.WriteString(stu.Age)
+	return buf.String()
+}
 ```
 
 ### receiver类型
@@ -338,50 +423,6 @@ package service
 当外面的改动必须影响到原始的receiver时，必须使用指针。
 
 最后，如果怀疑，那么请使用指针。
-
-
-### return时带上变量
-##### Don't
-``` go
-func run() (n int, err error) {
-	// ...
-	return
-}
-```
-
-##### Do
-``` go
-func run() (n int, err error) {
-	// ...
-	return n, err
-}
-```
-
-### 字符串拼接
-多个字符串拼接时不要使用`+`，建议使用`fmt.Sprintf`或者`bytes.Buffer`。
-##### Don't
-``` go
-func (stu Student) String() string {
-	return stu.Num + " " + stu.Name + " " + stu.Age
-}
-```
-
-##### Do
-``` go
-func (stu Student) String() string {
-	return fmt.Sprintf("%s %s %d", stu.Num, stu.Name, stu.Age)
-}
-或者
-func (stu Student) String() string {
-	var buf bytes.Buffer
-	buf.WriteString(stu.Num)
-	buf.WriteString(" ")
-	buf.WriteString(stu.Name)
-	buf.WriteString(" ")
-	buf.WriteString(stu.Age)
-	return buf.String()
-}
-```
 
 ### 控制结构
 将`变量作用域`控制在最小范围内。
