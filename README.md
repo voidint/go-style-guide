@@ -21,7 +21,7 @@
 
 ## 前提
 - 代码经由[gofmt](https://github.com/golang/go/tree/master/src/cmd/gofmt)或[goimports](https://github.com/golang/tools/tree/master/cmd/goimports)工具格式化
-- 代码已通过[golint](https://github.com/golang/lint)或[gometalinter](https://github.com/alecthomas/gometalinter)工具检查
+- 代码已通过[go tool vet](https://golang.org/cmd/vet/)、[golint](https://github.com/golang/lint)、[gometalinter](https://github.com/alecthomas/gometalinter)等工具的检查
 
 ## 代码规范
 ### import
@@ -195,6 +195,8 @@ func SplitHostPort(hostport string) (host, port string, err error){
 ...
 }
 ```
+
+**建议：每当变量命名不知所措时，使用[codelf](http://unbug.github.io/codelf/)看看世界上其他程序员的命名。**
 
 ### package命名
 包名由小写字母组成，不要使用下划线或者混合大小写。
