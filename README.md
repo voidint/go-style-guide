@@ -210,6 +210,18 @@ package busyBox
 package busybox
 ```
 
+包名不要使用复数
+##### Don't
+``` go
+package utils
+```
+
+##### Do
+``` go
+package util
+```
+
+
 所有对包内的引用都应该使用包名去访问，因此包内的名称引用可以去掉包名这个标识。
 ##### Don't
 ``` go
