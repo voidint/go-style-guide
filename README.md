@@ -52,7 +52,7 @@ func run() (n int, err error) {
 }
 ```
 
-### 不建议使uint
+### 不建议使用uint
 需要使用整形数据类型情况下，多数都可以直接使用`int`，而不建议使用`uint`。标准库及其他第三方的类库，在类似的使用场景下多使用`int`。那么，此种`随大流`可以免去不必要的数据类型转换。
 
 ##### Do
@@ -396,7 +396,7 @@ func SeasonName(season Season) string {
 - 对于`error`、`panic`模棱两可的情况，就选`error`。
 
 ### 字符串拼接
-多个字符串拼接时不要使用`+`，建议使用`fmt.Sprintf`或者`bytes.Buffer`。
+多个字符串拼接时不要使用`+`，建议使用`fmt.Sprintf`或者`strings.Builder`。
 ##### Don't
 ``` go
 func (stu Student) String() string {
